@@ -8,7 +8,6 @@ __pycache__/
 .python-version
 .venv/
 venv/
-uv.lock
 
 .pytest_cache/
 .mypy_cache/
