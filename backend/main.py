@@ -34,7 +34,6 @@ elif hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
 else:
     DEVICE = "cpu"
 
-
 print(f"Loading model from {CHECKPOINT_PATH} on {DEVICE}…")
 model = load_model_from_checkpoint(CHECKPOINT_PATH, DEVICE)
 model.eval()
@@ -61,12 +60,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
 class GenerateRequest(BaseModel):
     prompt: str = Field(default="Once upon a time", min_length=1)
     max_new_tokens: int = Field(default=200, ge=10, le=600)
     temperature: float = Field(default=0.8, ge=0.01, le=2.0)
-
 
 @app.get("/health")
 def health():
@@ -105,7 +102,6 @@ async def generate_stream(req: GenerateRequest):
                     )
                     generated.append(next_id)
 
-                    # Decode only the newly added token
                     token_text = tokenizer.decode([next_id])
                     generated_text += token_text
                     token_queue.put(token_text)
@@ -120,7 +116,7 @@ async def generate_stream(req: GenerateRequest):
         except Exception as exc:
             token_queue.put(f"\n\n[Error during generation: {exc}]")
         finally:
-            token_queue.put(None)  # sentinel
+            token_queue.put(None)
 
     thread = threading.Thread(target=_run_inference, daemon=True)
     thread.start()
@@ -128,7 +124,6 @@ async def generate_stream(req: GenerateRequest):
     async def _event_stream():
         loop = asyncio.get_event_loop()
         while True:
-            # Pull from the queue without blocking the event loop
             token_text = await loop.run_in_executor(None, token_queue.get)
             if token_text is None:
                 yield "data: [DONE]\n\n"
