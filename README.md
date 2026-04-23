@@ -183,12 +183,6 @@ npm install
 npm start
 ```
 
-Access the chatbot UI at:
-
-```text
-http://127.0.0.1:5173
-```
-
 ## Run Transformer Standalone
 
 If you want to sample from the model without running the backend/frontend stack, run the transformer modules directly from the repo root.
