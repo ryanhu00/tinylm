@@ -11,6 +11,8 @@ This project includes:
 
 - [Project Structure](#project-structure)
 - [Setup & Running](#setup--running)
+- [Train the Transformer (from scratch)](#train-the-transformer-from-scratch)
+- [Run Backend + Frontend](#run-backend--frontend)
 - [Run Transformer Standalone](#run-transformer-standalone)
 - [Model Architecture](#model-architecture)
 
@@ -78,6 +80,77 @@ Dependency note:
 - These are intentionally separate so backend/frontend app setup stays lightweight.
 
 
+## Train the Transformer (from scratch)
+
+The repository does **not** include large training artifacts (`.txt`, `.npy`, `.pt`).  
+After cloning, run this pipeline first:
+
+### 1. Download TinyStories raw text
+
+```bash
+mkdir -p transformer/data
+cd transformer/data
+
+curl -L -o TinyStoriesV2-GPT4-train.txt \
+  https://huggingface.co/datasets/roneneldan/TinyStories/resolve/main/TinyStoriesV2-GPT4-train.txt
+curl -L -o TinyStoriesV2-GPT4-valid.txt \
+  https://huggingface.co/datasets/roneneldan/TinyStories/resolve/main/TinyStoriesV2-GPT4-valid.txt
+
+cd ../..
+```
+
+### 2. Build tokenizer + tokenized datasets
+
+Run from `transformer/`:
+
+```bash
+cd transformer
+
+python - <<'PY'
+from pathlib import Path
+import numpy as np
+from tokenizer import train_bpe_tinystories, Tokenizer
+
+data_dir = Path("data")
+special_tokens = ["<|endoftext|>"]
+
+train_bpe_tinystories()
+
+tokenizer = Tokenizer.from_files(
+    vocab_filepath=str(data_dir / "vocab.json"),
+    merges_filepath=str(data_dir / "merges.json"),
+    special_tokens=special_tokens,
+)
+
+train_text = (data_dir / "TinyStoriesV2-GPT4-train.txt").read_text(encoding="utf-8")
+valid_text = (data_dir / "TinyStoriesV2-GPT4-valid.txt").read_text(encoding="utf-8")
+
+train_ids = np.array(tokenizer.encode(train_text), dtype=np.uint16)
+valid_ids = np.array(tokenizer.encode(valid_text), dtype=np.uint16)
+
+np.save(data_dir / "tinystories_train_ids.npy", train_ids)
+np.save(data_dir / "tinystories_dev_ids.npy", valid_ids)
+
+PY
+
+cd ..
+```
+
+### 3. Train
+
+```bash
+python -m transformer.train \
+  --train_data transformer/data/tinystories_train_ids.npy \
+  --val_data transformer/data/tinystories_dev_ids.npy \
+  --checkpoint_dir checkpoints
+```
+
+This writes the best checkpoint to `checkpoints/best_model.pt` (at repo root).
+
+## Run Backend + Frontend
+
+After training finishes:
+
 ### 1. Backend API
 
 Start the FastAPI backend:
@@ -118,34 +191,9 @@ http://127.0.0.1:5173
 
 ## Run Transformer Standalone
 
-If you want to train or sample from the model without running the backend/frontend stack, run the transformer modules directly from the repo root.
+If you want to sample from the model without running the backend/frontend stack, run the transformer modules directly from the repo root.
 
-### 0. Download data
-
-The large TinyStories raw text files are not committed to GitHub. Download them locally into `transformer/data/`:
-
-```bash
-mkdir -p transformer/data
-cd transformer/data
-
-wget https://huggingface.co/datasets/roneneldan/TinyStories/resolve/main/TinyStoriesV2-GPT4-train.txt
-wget https://huggingface.co/datasets/roneneldan/TinyStories/resolve/main/TinyStoriesV2-GPT4-valid.txt
-
-cd ../..
-```
-
-### 1. Train
-
-```bash
-python -m transformer.train \
-  --train_data transformer/data/tinystories_train_ids.npy \
-  --val_data transformer/data/tinystories_dev_ids.npy \
-  --checkpoint_dir checkpoints
-```
-
-This saves the best checkpoint to `checkpoints/best_model.pt`.
-
-### 2. Generate text
+### Generate text from trained checkpoint
 
 ```bash
 python -m transformer.generate \

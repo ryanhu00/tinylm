@@ -32,8 +32,6 @@ export default function AdvancedSettings({
   onToggle,
   temperature,
   onTemperatureChange,
-  topP,
-  onTopPChange,
   disabled,
 }) {
   return (
@@ -64,16 +62,6 @@ export default function AdvancedSettings({
             max={2.0}
             step={0.05}
             onChange={onTemperatureChange}
-            disabled={disabled}
-            format={v => v.toFixed(2)}
-          />
-          <SliderRow
-            label="Top-p (nucleus sampling)"
-            value={topP}
-            min={0.1}
-            max={1.0}
-            step={0.05}
-            onChange={onTopPChange}
             disabled={disabled}
             format={v => v.toFixed(2)}
           />

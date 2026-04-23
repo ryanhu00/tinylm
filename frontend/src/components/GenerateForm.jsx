@@ -1,11 +1,7 @@
 import { useState } from 'react'
 import AdvancedSettings from './AdvancedSettings'
 
-const LENGTH_PRESETS = [
-  { label: 'Short', tokens: 100 },
-  { label: 'Medium', tokens: 250 },
-  { label: 'Long', tokens: 500 },
-]
+const DEFAULT_MAX_TOKENS = 250
 
 export default function GenerateForm({
   onGenerate,
@@ -15,18 +11,15 @@ export default function GenerateForm({
   defaultBackendUrl,
 }) {
   const [prompt, setPrompt] = useState('Once upon a time')
-  const [lengthIdx, setLengthIdx] = useState(1)
   const [temperature, setTemperature] = useState(0.8)
-  const [topP, setTopP] = useState(0.9)
   const [showAdvanced, setShowAdvanced] = useState(false)
 
   function handleSubmit(e) {
     e?.preventDefault()
     onGenerate({
       prompt: prompt.trim() || 'Once upon a time',
-      maxTokens: LENGTH_PRESETS[lengthIdx].tokens,
+      maxTokens: DEFAULT_MAX_TOKENS,
       temperature,
-      topP,
       backendUrl: defaultBackendUrl.trim().replace(/\/$/, ''),
     })
   }
@@ -54,54 +47,11 @@ export default function GenerateForm({
         />
       </div>
 
-      <div>
-        <div className="flex items-center justify-between mb-2">
-          <label className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">
-            Story Length
-          </label>
-          <span className="text-xs font-medium text-violet-700 dark:text-violet-300">
-            {LENGTH_PRESETS[lengthIdx].label} (~{LENGTH_PRESETS[lengthIdx].tokens} tokens)
-          </span>
-        </div>
-        <div className="relative pt-1">
-          <input
-            type="range"
-            min={0}
-            max={LENGTH_PRESETS.length - 1}
-            step={1}
-            value={lengthIdx}
-            onChange={e => setLengthIdx(Number(e.target.value))}
-            disabled={isGenerating}
-            className="w-full h-2 rounded-full appearance-none cursor-pointer
-                       bg-gray-200 dark:bg-gray-700
-                       accent-violet-700 dark:accent-violet-300
-                       disabled:opacity-50 disabled:cursor-not-allowed"
-          />
-          <div className="flex justify-between mt-1.5">
-            {LENGTH_PRESETS.map((p, i) => (
-              <span
-                key={p.label}
-                onClick={() => !isGenerating && setLengthIdx(i)}
-                className={`text-xs cursor-pointer select-none transition-colors
-                            ${i === lengthIdx
-                              ? 'text-violet-700 dark:text-violet-300 font-semibold'
-                              : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300'
-                            }`}
-              >
-                {p.label}
-              </span>
-            ))}
-          </div>
-        </div>
-      </div>
-
       <AdvancedSettings
         open={showAdvanced}
         onToggle={() => setShowAdvanced(o => !o)}
         temperature={temperature}
         onTemperatureChange={setTemperature}
-        topP={topP}
-        onTopPChange={setTopP}
         disabled={isGenerating}
       />
 

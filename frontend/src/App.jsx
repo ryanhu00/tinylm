@@ -14,7 +14,7 @@ export default function App() {
   const abortRef = useRef(null)
   const stopRef = useRef(false)
 
-  const handleGenerate = useCallback(async ({ prompt, maxTokens, temperature, topP, backendUrl }) => {
+  const handleGenerate = useCallback(async ({ prompt, temperature, maxTokens, backendUrl }) => {
     stopRef.current = false
     setOutput(prompt)
     setError(null)
@@ -31,7 +31,6 @@ export default function App() {
           prompt,
           max_new_tokens: maxTokens,
           temperature,
-          top_p: topP,
         }),
         signal: controller.signal,
       })

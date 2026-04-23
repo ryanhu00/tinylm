@@ -12,14 +12,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
-# Allow importing the transformer package from the repo root
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from transformer.generate import load_model_from_checkpoint, sample_next_token
 from transformer.tokenizer import Tokenizer
 
-# ---------------------------------------------------------------------------
-# Config — override via environment variables
-# ---------------------------------------------------------------------------
 REPO_ROOT = os.path.join(os.path.dirname(__file__), "..")
 CHECKPOINT_PATH = os.environ.get(
     "CHECKPOINT_PATH", os.path.join(REPO_ROOT, "checkpoints", "best_model.pt")
@@ -31,9 +27,6 @@ MERGES_PATH = os.environ.get(
     "MERGES_PATH", os.path.join(REPO_ROOT, "transformer", "data", "merges.json")
 )
 
-# ---------------------------------------------------------------------------
-# Device selection
-# ---------------------------------------------------------------------------
 if torch.cuda.is_available():
     DEVICE = "cuda"
 elif hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
@@ -41,9 +34,7 @@ elif hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
 else:
     DEVICE = "cpu"
 
-# ---------------------------------------------------------------------------
-# Load model + tokenizer once at startup
-# ---------------------------------------------------------------------------
+
 print(f"Loading model from {CHECKPOINT_PATH} on {DEVICE}…")
 model = load_model_from_checkpoint(CHECKPOINT_PATH, DEVICE)
 model.eval()
@@ -61,9 +52,6 @@ SENTENCE_END_RE = re.compile(r'[.!?]["\')\]]?\s*$')
 MAX_OVERFLOW_TOKENS = 48
 MAX_OVERFLOW_RATIO = 0.2
 
-# ---------------------------------------------------------------------------
-# App
-# ---------------------------------------------------------------------------
 app = FastAPI(title="TinyLM API")
 
 app.add_middleware(
@@ -78,7 +66,6 @@ class GenerateRequest(BaseModel):
     prompt: str = Field(default="Once upon a time", min_length=1)
     max_new_tokens: int = Field(default=200, ge=10, le=600)
     temperature: float = Field(default=0.8, ge=0.01, le=2.0)
-    top_p: float = Field(default=0.9, ge=0.0, le=1.0)
 
 
 @app.get("/health")
@@ -95,7 +82,6 @@ async def generate_stream(req: GenerateRequest):
     token_queue: queue.Queue[str | None] = queue.Queue()
 
     def _run_inference():
-        """Blocking inference loop — runs in a background thread."""
         try:
             generated = list(prompt_ids)
             context_length = model.context_length
@@ -116,7 +102,6 @@ async def generate_stream(req: GenerateRequest):
                     next_id = sample_next_token(
                         next_logits,
                         temperature=req.temperature,
-                        top_p=req.top_p,
                     )
                     generated.append(next_id)
 
