@@ -1,0 +1,32 @@
+[project]
+name = "tinylm"
+version = "1.0.0"
+description = "A tiny transformer language model trained on TinyStories"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "matplotlib>=3.9.0",
+    "einops>=0.8.1",
+    "einx>=0.3.0",
+    "jaxtyping>=0.3.0",
+    "numpy",
+    "psutil>=6.1.1",
+    "pytest>=8.3.4",
+    "regex>=2024.11.6",
+    "submitit>=1.5.2",
+    "tiktoken>=0.9.0",
+    "torch~=2.6.0; sys_platform != 'darwin' or platform_machine != 'x86_64'",
+    "torch~=2.2.2; sys_platform == 'darwin' and platform_machine == 'x86_64'",
+    "tqdm>=4.67.1",
+]
+
+[project.scripts]
+tinylm-train = "transformer.train:main"
+tinylm-generate = "transformer.generate:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["transformer"]
