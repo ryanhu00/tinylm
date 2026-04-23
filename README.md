@@ -85,7 +85,7 @@ Dependency note:
 The repository does **not** include large training artifacts (`.txt`, `.npy`, `.pt`).  
 After cloning, run this pipeline first:
 
-### 1. Download TinyStories raw text
+### 1. Download TinyStories Dataset
 
 ```bash
 mkdir -p transformer/data
